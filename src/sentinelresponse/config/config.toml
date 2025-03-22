@@ -1,0 +1,22 @@
+[main]
+app_name = "SentinelResponse"
+environment = "production"
+
+[notification]
+email_enabled = true
+email_recipients = ["ops@example.com", "dev@example.com"]
+slack_webhook = "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+
+[log]
+level = "INFO"
+file = "/tmp/log/sentinel_response.log"
+max_size_mb = 200
+backup_count = 5
+
+[log.opensearch_config]
+hosts = ["http://192.168.0.102:9200"]
+http_auth = []
+use_ssl = false
+verify_certs = false
+batch_size = 100
+flush_interval = 5.0

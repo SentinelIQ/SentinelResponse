@@ -1,92 +1,88 @@
-import logging
+"""This module provides the AlertManager class for managing Alert objects with CRUD operations,
+and the NotFoundError exception for handling missing alerts.
+"""
 
 from sentinelresponse.alerts.models import Alert
+from sentinelresponse.logmanager.log_manager import LogManager
 
 
 class NotFoundError(Exception):
-    """Exception raised when an item is not found.
-
-    This exception is used by AlertManager methods to signal that a specific
-    alert, identified by its unique identifier, does not exist in the storage.
-
-    Examples
-    --------
-    >>> raise NotFoundError("Alerta 1 não encontrado.")  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-      ...
-    NotFoundError: Alerta 1 não encontrado.
-
-    """
-
-
-class AlertManager:
-    """Manages alerts with support for CRUD (Create, Read, Update, Delete) operations.
-
-    This class uses an internal dictionary to store Alert objects, keyed by their
-    unique `alert_id`. It provides methods to add a new alert, retrieve an alert
-    by ID, retrieve all alerts, update an existing alert, and delete an alert.
+    """Exception raised when an item is not found in the AlertManager's internal storage.
 
     Attributes
     ----------
-    alerts : dict[int, Alert]
-        A dictionary mapping alert IDs to Alert objects.
-
-    Examples
-    --------
-    >>> from sentinelresponse.alerts.models import Alert
-    >>> am = AlertManager()
-    >>> am.alerts
-    {}
+        message (str): Detailed description of the error.
 
     """
 
-    def __init__(self):
-        """Initialize the AlertManager with an empty alerts dictionary.
+    def __init__(self, message: str) -> None:
+        """Initialize the NotFoundError with a detailed error message.
 
-        The `alerts` dictionary is used to store Alert objects, where each key is
-        the unique identifier of an alert.
-
-        Examples
-        --------
-        >>> am = AlertManager()
-        >>> am.alerts
-        {}
+        Parameters
+        ----------
+        message : str
+            Detailed description of the error.
 
         """
+        super().__init__(message)
+        self.message = message
+
+
+class AlertManager:
+    """A manager class providing Create, Read, Update, and Delete (CRUD) operations for Alert objects,
+    with each operation being logged via the LogManager.
+
+    Attributes
+    ----------
+        alerts (dict[int, Alert]): In-memory storage mapping alert IDs to Alert instances.
+        logger (logging.Logger): Logger instance obtained from LogManager for recording operation details.
+
+    """
+
+    def __init__(self) -> None:
+        """Initialize an AlertManager with empty storage and a configured logger."""
         self.alerts: dict[int, Alert] = {}
+        self.logger = LogManager.get_logger()
 
     def create_alert(self, alert: Alert) -> None:
-        """Create a new alert and add it to the manager.
+        """Create a new alert and store it in the manager.
 
-        This method logs the creation of an alert and stores the Alert object in
-        the internal dictionary using its `alert_id` as the key.
+        If an alert with the same alert_id already exists, a warning is logged and the
+        alert is not added again.
 
         Parameters
         ----------
         alert : Alert
-            The Alert object to be added. It should have a unique `alert_id` attribute.
+            The Alert instance to store.
 
         Returns
         -------
         None
 
-        Examples
-        --------
+        Example
+        -------
+        >>> manager = AlertManager()
         >>> from sentinelresponse.alerts.models import Alert
-        >>> alert = Alert(alert_id=1, message="Login suspeito detectado", severity="Alta")
-        >>> am = AlertManager()
-        >>> am.create_alert(alert)
+        >>> alert = Alert(1, "Test message", "LOW")
+        >>> manager.create_alert(alert)
+        >>> manager.read_alert(1).alert_id
+        1
+        >>> # Creating the same alert again does nothing (no exception)
+        >>> manager.create_alert(alert)
 
         """
-        logging.info(f"Criando alerta: {alert}")
+        if alert.alert_id in self.alerts:
+            self.logger.warning("Attempt to create an existing alert: %s", alert)
+            return
+
         self.alerts[alert.alert_id] = alert
+        self.logger.info("Alert created: %s", alert)
 
     def read_alert(self, alert_id: int) -> Alert:
-        """Retrieve an alert by its unique identifier.
+        """Retrieve an alert by its alert_id.
 
-        This method searches for an Alert object in the internal dictionary using
-        the provided `alert_id`. If found, it returns the Alert; otherwise, it
-        raises a NotFoundError.
+        This method fetches the alert from the internal dictionary. If the alert is not
+        found, an error is logged and a NotFoundError is raised.
 
         Parameters
         ----------
@@ -96,122 +92,125 @@ class AlertManager:
         Returns
         -------
         Alert
-            The Alert object corresponding to the given `alert_id`.
+            The Alert instance corresponding to the provided ID.
 
         Raises
         ------
         NotFoundError
-            If no alert with the specified `alert_id` exists.
+            If no Alert with the given ID exists.
 
-        Examples
-        --------
-        >>> from sentinelresponse.alerts.models import Alert
-        >>> alert = Alert(alert_id=1, message="Login suspeito detectado", severity="Alta")
-        >>> am = AlertManager()
-        >>> am.create_alert(alert)
-        >>> retrieved_alert = am.read_alert(1)
-        >>> retrieved_alert.message
-        'Login suspeito detectado'
+        Example
+        -------
+        >>> manager = AlertManager()
+        >>> alert = Alert(2, "Test read", "MEDIUM")
+        >>> manager.create_alert(alert)
+        >>> manager.read_alert(2).alert_id
+        2
+        >>> # Retrieving a non-existent alert raises the fully-qualified exception
+        >>> manager.read_alert(999)  # nonexistent ID
+        Traceback (most recent call last):
+        ...
+        sentinelresponse.alerts.manager.NotFoundError: Alert 999 not found.
 
         """
-        if alert_id in self.alerts:
-            return self.alerts[alert_id]
-        raise NotFoundError(f"Alerta {alert_id} não encontrado.")
+        try:
+            alert = self.alerts[alert_id]
+            self.logger.debug("Alert retrieved: %s", alert)
+            return alert
+        except KeyError:
+            msg = f"Alert {alert_id} not found."
+            self.logger.error(msg)
+            raise NotFoundError(msg)
 
     def read_all_alerts(self) -> list[Alert]:
-        """Retrieve all alerts stored in the manager.
+        """Retrieve all stored Alerts.
 
         Returns
         -------
-        list[Alert]
-            A list of all Alert objects currently managed by the AlertManager.
+            list[Alert]: A list of all Alert instances currently stored.
 
-        Examples
-        --------
-        >>> from sentinelresponse.alerts.models import Alert
-        >>> alert1 = Alert(alert_id=1, message="Login suspeito", severity="Alta")
-        >>> alert2 = Alert(alert_id=2, message="Acesso inválido", severity="Baixa")
-        >>> am = AlertManager()
-        >>> am.create_alert(alert1)
-        >>> am.create_alert(alert2)
-        >>> all_alerts = am.read_all_alerts()
-        >>> len(all_alerts)
-        2
+        >>> manager = AlertManager()
+        >>> manager.read_all_alerts()
+        []
 
         """
-        return list(self.alerts.values())
+        alerts = list(self.alerts.values())
+        self.logger.debug("Retrieved all alerts (count=%d)", len(alerts))
+        return alerts
 
     def update_alert(self, alert: Alert) -> None:
-        """Update an existing alert.
+        """Update an existing alert with new information.
 
-        This method replaces the Alert object with the same `alert_id` in the
-        internal dictionary with the provided Alert object containing updated
-        information. If the alert does not exist, a NotFoundError is raised.
+        The alert must already exist in the internal dictionary; otherwise, a NotFoundError
+        is raised. If the alert exists, it is replaced by the new alert object.
 
         Parameters
         ----------
         alert : Alert
-            The Alert object containing updated information. Its `alert_id` must
-            already exist in the manager.
-
-        Returns
-        -------
-        None
+            The Alert instance with updated data. Its ID must exist in storage.
 
         Raises
         ------
         NotFoundError
-            If no alert with the given `alert_id` exists for update.
+            If attempting to update an Alert that does not exist.
 
-        Examples
-        --------
+        Example
+        -------
+        >>> manager = AlertManager()
         >>> from sentinelresponse.alerts.models import Alert
-        >>> alert = Alert(alert_id=1, message="Mensagem inicial", severity="Alta")
-        >>> am = AlertManager()
-        >>> am.create_alert(alert)
-        >>> alert.message = "Mensagem atualizada"
-        >>> am.update_alert(alert)
+        >>> alert = Alert(2, "Initial message", "LOW")
+        >>> manager.create_alert(alert)
+        >>> updated = Alert(2, "Updated message", "HIGH")
+        >>> manager.update_alert(updated)
+        >>> manager.read_alert(2).alert_id
+        2
+        >>> # Attempting to update a non-existent alert raises the fully-qualified exception
+        >>> manager.update_alert(Alert(999, "Nope", "LOW"))
+        Traceback (most recent call last):
+        ...
+        sentinelresponse.alerts.manager.NotFoundError: Alert 999 not found for update.
 
         """
-        if alert.alert_id in self.alerts:
-            logging.info(f"Atualizando alerta: {alert}")
-            self.alerts[alert.alert_id] = alert
-        else:
-            msg = f"Alerta {alert.alert_id} não encontrado para atualização."
+        if alert.alert_id not in self.alerts:
+            msg = f"Alert {alert.alert_id} not found for update."
+            self.logger.error(msg)
             raise NotFoundError(msg)
 
-    def delete_alert(self, alert_id: int) -> None:
-        """Delete an alert from the manager by its unique identifier.
+        self.alerts[alert.alert_id] = alert
+        self.logger.info("Alert updated: %s", alert)
 
-        This method removes the Alert object corresponding to the given `alert_id`
-        from the internal dictionary. If the alert does not exist, it raises a
-        NotFoundError.
+    def delete_alert(self, alert_id: int) -> None:
+        """Delete an alert from the manager using its alert_id.
+
+        If the alert is not found, an error is logged and a NotFoundError is raised.
 
         Parameters
         ----------
         alert_id : int
-            The unique identifier of the alert to delete.
-
-        Returns
-        -------
-        None
+            Unique identifier of the Alert to delete.
 
         Raises
         ------
         NotFoundError
-            If no alert with the specified `alert_id` is found.
+            If attempting to delete an Alert that does not exist.
 
-        Examples
-        --------
-        >>> from sentinelresponse.alerts.models import Alert
-        >>> alert = Alert(alert_id=1, message="Login suspeito", severity="Alta")
-        >>> am = AlertManager()
-        >>> am.create_alert(alert)
-        >>> am.delete_alert(1)
+        Example
+        -------
+        >>> manager = AlertManager()
+        >>> alert = Alert(4, "Test delete", "LOW")
+        >>> manager.create_alert(alert)
+        >>> manager.delete_alert(4)
+        >>> # Attempting to delete a nonexistent alert raises the fullyqualified exception
+        >>> manager.delete_alert(123)  # nonexistent deletion
+        Traceback (most recent call last):
+        ...
+        sentinelresponse.alerts.manager.NotFoundError: Alert 123 not found for deletion.
 
         """
-        if alert_id in self.alerts:
-            logging.info(f"Excluindo alerta com ID: {alert_id}")
-            del self.alerts[alert_id]
-        else:
-            raise NotFoundError(f"Alerta {alert_id} não encontrado para exclusão.")
+        if alert_id not in self.alerts:
+            msg = f"Alert {alert_id} not found for deletion."
+            self.logger.error(msg)
+            raise NotFoundError(msg)
+
+        del self.alerts[alert_id]
+        self.logger.info("Alert deleted (ID=%d)", alert_id)

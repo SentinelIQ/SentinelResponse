@@ -1,4 +1,4 @@
-import logging
+from sentinelresponse.logmanager.log_manager import LogManager
 
 
 class MetricsManager:
@@ -12,189 +12,63 @@ class MetricsManager:
     ----------
     metrics : dict[str, float]
         A dictionary that maps metric names to their corresponding float values.
-
-    Examples
-    --------
-    >>> mm = MetricsManager()
-    >>> mm.set_metric("accuracy", 0.95)
-    >>> mm.read_metric("accuracy")
-    0.95
-    >>> print(mm.generate_dashboard())
-    === Dashboard ===
-    accuracy: 0.95
-
     """
 
     def __init__(self):
-        """Initialize the MetricsManager with an empty dictionary for metrics.
-
-        Examples
-        --------
-        >>> mm = MetricsManager()
-        >>> mm.metrics
-        {}
-
-        """
+        """Initialize the MetricsManager with an empty dictionary for metrics."""
         self.metrics: dict[str, float] = {}
+        self.logger = LogManager.get_logger()
 
     def set_metric(self, key: str, value: float) -> None:
-        """Set a metric with the specified key and value.
-
-        If a metric with the given key already exists, it is overwritten.
-
-        Parameters
-        ----------
-        key : str
-            The name of the metric.
-        value : float
-            The value to assign to the metric.
-
-        Returns
-        -------
-        None
-
-        Examples
-        --------
-        >>> mm = MetricsManager()
-        >>> mm.set_metric("accuracy", 0.95)
-        >>> mm.metrics["accuracy"]
-        0.95
-
-        """
-        logging.info(f"Definindo métrica '{key}' com valor {value}")
+        """Set a metric with the specified key and value."""
+        self.logger.info(f"Setting metric '{key}' to {value}")
         self.metrics[key] = value
 
     def read_metric(self, key: str) -> float:
         """Retrieve the value of a metric by its key.
 
-        Parameters
-        ----------
-        key : str
-            The name of the metric to retrieve.
-
-        Returns
-        -------
-        float
-            The value associated with the specified metric.
-
-        Raises
-        ------
-        KeyError
-            If the metric with the specified key does not exist.
-
-        Examples
-        --------
-        >>> mm = MetricsManager()
-        >>> mm.set_metric("accuracy", 0.95)
-        >>> mm.read_metric("accuracy")
-        0.95
-
+        Raises KeyError if the metric does not exist.
         """
-        if key in self.metrics:
+        try:
             return self.metrics[key]
-        raise KeyError(f"Métrica '{key}' não encontrada.")
+        except KeyError:
+            message = f"Metric '{key}' not found."
+            self.logger.warning(message)
+            raise KeyError(message)
 
     def read_all_metrics(self) -> dict[str, float]:
-        """Retrieve a copy of all metrics.
-
-        Returns
-        -------
-        dict[str, float]
-            A dictionary containing all metrics stored in the manager.
-
-        Examples
-        --------
-        >>> mm = MetricsManager()
-        >>> mm.set_metric("accuracy", 0.95)
-        >>> mm.read_all_metrics()
-        {'accuracy': 0.95}
-
-        """
+        """Retrieve a copy of all metrics."""
+        self.logger.debug(f"Retrieving all metrics ({len(self.metrics)})")
         return self.metrics.copy()
 
     def update_metric(self, key: str, value: float) -> None:
         """Update the value of an existing metric.
 
-        Parameters
-        ----------
-        key : str
-            The name of the metric to update.
-        value : float
-            The new value for the metric.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        KeyError
-            If the metric with the specified key is not found.
-
-        Examples
-        --------
-        >>> mm = MetricsManager()
-        >>> mm.set_metric("accuracy", 0.95)
-        >>> mm.update_metric("accuracy", 0.97)
-        >>> mm.read_metric("accuracy")
-        0.97
-
+        Raises KeyError if the metric does not exist.
         """
         if key in self.metrics:
-            logging.info(f"Atualizando métrica '{key}' para {value}")
+            self.logger.info(f"Updating metric '{key}' to {value}")
             self.metrics[key] = value
         else:
-            raise KeyError(f"Métrica '{key}' não encontrada para atualização.")
+            message = f"Metric '{key}' not found for update."
+            self.logger.warning(message)
+            raise KeyError(message)
 
     def delete_metric(self, key: str) -> None:
         """Delete a metric identified by its key.
 
-        Parameters
-        ----------
-        key : str
-            The name of the metric to delete.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        KeyError
-            If the metric with the specified key does not exist.
-
-        Examples
-        --------
-        >>> mm = MetricsManager()
-        >>> mm.set_metric("accuracy", 0.95)
-        >>> mm.delete_metric("accuracy")
-        >>> "accuracy" in mm.metrics
-        False
-
+        Raises KeyError if the metric does not exist.
         """
         if key in self.metrics:
-            logging.info(f"Excluindo métrica '{key}'")
+            self.logger.info(f"Deleting metric '{key}'")
             del self.metrics[key]
         else:
-            raise KeyError(f"Métrica '{key}' não encontrada para exclusão.")
+            message = f"Metric '{key}' not found for deletion."
+            self.logger.warning(message)
+            raise KeyError(message)
 
     def generate_dashboard(self) -> str:
-        """Generate a textual dashboard summarizing all stored metrics.
-
-        Returns
-        -------
-        str
-            A formatted string listing all metric keys and their values.
-
-        Examples
-        --------
-        >>> mm = MetricsManager()
-        >>> mm.set_metric("accuracy", 0.95)
-        >>> print(mm.generate_dashboard())
-        === Dashboard ===
-        accuracy: 0.95
-
-        """
+        """Generate a textual dashboard summarizing all stored metrics."""
         dashboard = "=== Dashboard ===\n"
         for key, value in self.metrics.items():
             dashboard += f"{key}: {value}\n"

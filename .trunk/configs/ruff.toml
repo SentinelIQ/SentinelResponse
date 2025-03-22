@@ -2,11 +2,9 @@
 select = [
   "A",
   "ASYNC",
-  "B",
   "BLE",
   "C4",
   "C90",
-  "D",
   "DTZ",
   "E",
   "EM",
@@ -53,6 +51,7 @@ select = [
 ignore = [
   "D203",
   "G",
+  "D",
   "PERF203",
   "B904",
   "PT011",

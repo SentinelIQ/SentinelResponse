@@ -1,5 +1,8 @@
 name: Test
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -15,6 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.12"]
+        # trunk-ignore(yamllint/quoted-strings)
         resolution-strategy: ["highest", "lowest-direct"]
 
     name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution-strategy }})

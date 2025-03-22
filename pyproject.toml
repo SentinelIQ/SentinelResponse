@@ -11,7 +11,7 @@ authors = [
   { name = "Luiz Gustavo Corrêa Filho", email = "zcorrea357@gmail.com" },
 ]
 requires-python = ">=3.10,<4.0"
-dependencies = []
+dependencies = ["opensearch-py>=2.8.0", "sentry-sdk>=2.24.0", "toml>=0.10.2"]
 
 [project.urls] # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels
 homepage = "https://github.com/SentinelIQ/SentinelResponse"
@@ -95,7 +95,6 @@ select = [
   "BLE",
   "C4",
   "C90",
-  "D",
   "DTZ",
   "E",
   "EM",
@@ -139,6 +138,7 @@ select = [
 ]
 ignore = [
   "D203",
+
   "G",
   "PERF203",
   "B904",

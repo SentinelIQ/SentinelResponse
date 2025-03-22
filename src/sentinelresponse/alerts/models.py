@@ -28,13 +28,24 @@ class Alert:
     >>> alert = Alert(alert_id=1, message="Login suspeito detectado", severity="Alta")
     >>> print(alert)
     Alert(id=1, severity='Alta')
-
     """
 
     def __init__(self, alert_id: int, message: str, severity: str):
+        """Initialize a new Alert instance.
+
+        Parameters
+        ----------
+        alert_id : int
+            Unique identifier for the alert.
+        message : str
+            Detailed description of the alert.
+        severity : str
+            Severity level of the alert.
+        """
         self.alert_id = alert_id
         self.message = message
         self.severity = severity
 
     def __repr__(self):
+        """Return an unambiguous string representation of the Alert."""
         return f"Alert(id={self.alert_id}, severity='{self.severity}')"

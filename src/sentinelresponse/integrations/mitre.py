@@ -1,4 +1,4 @@
-import logging
+from sentinelresponse.logmanager.log_manager import LogManager
 
 
 class MitreIntegration:
@@ -20,6 +20,9 @@ class MitreIntegration:
 
     """
 
+    def __init__(self):
+        self.logger = LogManager.get_logger()
+
     def import_tactics(self) -> None:
         """Import TTPs from the MITRE ATT&CK framework.
 
@@ -38,4 +41,4 @@ class MitreIntegration:
         >>> mitre_integration.import_tactics()
 
         """
-        logging.info("[MITRE] Importando TTPs do MITRE ATT&CK...")
+        self.logger.info("[MITRE] Importando TTPs do MITRE ATT&CK...")

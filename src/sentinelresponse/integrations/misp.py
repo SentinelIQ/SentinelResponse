@@ -1,4 +1,4 @@
-import logging
+from sentinelresponse.logmanager.log_manager import LogManager
 
 
 class MISPIntegration:
@@ -21,6 +21,9 @@ class MISPIntegration:
 
     """
 
+    def __init__(self):
+        self.logger = LogManager.get_logger()
+
     def import_iocs(self) -> None:
         """Import IOCs from a MISP instance.
 
@@ -39,4 +42,4 @@ class MISPIntegration:
         >>> misp_integration.import_iocs()
 
         """
-        logging.info("[MISP] Importando IOCs do MISP...")
+        self.logger.info("[MISP] Importing IOCs from MISP...")
