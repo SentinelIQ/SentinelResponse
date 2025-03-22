@@ -43,4 +43,15 @@ jobs:
         run: devcontainer exec --workspace-folder . poe lint
 
       - name: Test package
-        run: devcontainer exec --workspace-folder . poe test
+        id: run-tests
+        run: |
+          devcontainer exec --workspace-folder . poe test --junitxml=results.xml
+
+      - name: Upload results
+        if: "!cancelled()"
+        uses: trunk-io/analytics-uploader@main
+        with:
+          junit-paths: "**/results.xml"
+          org-slug: sentineliq
+          token: ${{ secrets.TRUNK_API_TOKEN }}
+        continue-on-error: true
