@@ -1,0 +1,1 @@
+"""SentinelResponse."""
