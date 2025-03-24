@@ -1,5 +1,4 @@
 # tests/test_sentinel_response_config.py
-
 """Tests para sentinelresponse.config.sentinel_response_config.SentinelResponseConfig."""
 
 import threading

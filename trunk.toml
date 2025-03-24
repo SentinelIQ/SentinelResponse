@@ -1,0 +1,13 @@
+[project]
+name = "sentinelresponse"
+version = "0.0.0"
+
+[checks]
+black = { enabled = true, line-length = 88 }
+isort = { enabled = true, profile = "black" }
+ruff = { enabled = true, line-length = 88, select = ["E","F","I","T","B","S"], ignore =["F841", "E501","C0116", "ERA001"] }
+pylint = { enabled = true, max-line-length = 88, disable = ["C0114","C0115","C0116","E0401"] }
+bandit = { enabled = true }
+safety = { enabled = true }
+git-diff-check = { enabled = true, ignore-deleted = true }
+
